@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:rssreader/services/api_service.dart';
+import 'package:provider/provider.dart';
 
 import 'package:rssreader/widgets/widgets.dart';
+import 'package:rssreader/models/article.dart';
+import 'package:rssreader/providers/source_provider.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({Key? key}) : super(key: key);
@@ -11,12 +14,11 @@ class NewsScreen extends StatefulWidget {
 }
 
 class _NewsScreenState extends State<NewsScreen> {
-  @override
-  void initState() {
-    ApiService().parseRSS();
-    //parseRSS();
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   ApiService().parseRSS();
+  //   super.initState();
+  // }
 
   void _showAction(BuildContext context, int index) {
     const actionTitles = ['Create Post', 'Upload Photo', 'Upload Video'];
@@ -38,6 +40,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sourcesProvider = Provider.of<NewsSources>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         title: const Text('RSS Feed'),
@@ -46,25 +49,20 @@ class _NewsScreenState extends State<NewsScreen> {
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.change_circle),
-          )
+          ),
         ],
       ),
-      body: StreamBuilder(
-        stream: ApiService().parseRSS().asStream(),
+      body: FutureBuilder(
+        future: ApiService().parseRSS(
+            sourcesProvider.sources[sourcesProvider.currentSource].url),
         builder: <AsyncSnapshot>(context, snapshot) {
           if (snapshot.hasData) {
+            List<Article> articles = snapshot.data;
+
             return ListView.builder(
-              itemCount: snapshot.data.length,
+              itemCount: articles.length,
               itemBuilder: (context, int index) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Card(
-                      child: ListTile(
-                    title: Text(snapshot.data[index].title),
-                    subtitle: Text(snapshot.data[index].description),
-                    leading: Text((1 + index).toString()),
-                  )),
-                );
+                return CustomTile(article: articles[index]);
               },
             );
           } else if (snapshot.hasError ||
@@ -95,6 +93,7 @@ class _NewsScreenState extends State<NewsScreen> {
           ),
         ],
       ),
+      drawer: AppDrawer(),
     );
   }
 }

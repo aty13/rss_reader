@@ -1,17 +1,14 @@
-import 'package:webfeed/webfeed.dart';
 import 'package:http/http.dart' as http;
+import 'package:webfeed/webfeed.dart';
+import 'package:rssreader/models/article.dart';
 
 class ApiService {
-  String _url = 'https://rss.dw.com/xml/rss-ru-all';
-//
-//https://www.liga.net/news/world/rss.xml
-  Future parseRSS() async {
-    var response = await http.get(Uri.parse(_url));
+  Future parseRSS(String url) async {
+    var response = await http.get(Uri.parse(url));
     var channel = RssFeed.parse(response.body);
-
-    var item = channel.items;
-    print(item![0].description);
-    
-    return item;
+    var items = channel.items;
+    List<Article> articles =
+        items!.map((item) => Article.fromRss(item)).toList();
+    return articles;
   }
 }
